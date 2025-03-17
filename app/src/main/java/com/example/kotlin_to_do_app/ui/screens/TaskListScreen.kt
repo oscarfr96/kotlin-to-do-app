@@ -212,8 +212,6 @@ fun TaskListScreen(
     }
 }
 
-// Mantén el resto del código (TaskItem, etc.) igual
-
 @Composable
 fun TaskItem(
     task: Task,
@@ -272,6 +270,34 @@ fun TaskItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
+                // Fecha de vencimiento - Más prominente
+                if (task.dueDate != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = dateFormat.format(task.dueDate),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+
                 if (task.description.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -283,28 +309,7 @@ fun TaskItem(
                         textDecoration = if (task.isDone) TextDecoration.LineThrough else TextDecoration.None
                     )
                 }
-
-                if (task.dueDate != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = dateFormat.format(task.dueDate),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                }
             }
-
         }
     }
 }

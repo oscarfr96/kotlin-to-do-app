@@ -108,6 +108,7 @@ fun TaskDialog(
                                 onClick = {
                                     datePickerState.selectedDateMillis?.let { millis ->
                                         dueDate = Date(millis)
+                                        println("Fecha seleccionada: ${dateFormat.format(dueDate!!)}")
                                     }
                                     showDatePicker = false
                                 }

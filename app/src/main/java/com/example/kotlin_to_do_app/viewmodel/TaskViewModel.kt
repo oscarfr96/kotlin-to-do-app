@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlin.comparisons.nullsLast
 
 enum class TaskSortOrder {
     DATE_ASC, DATE_DESC, PRIORITY_HIGH_FIRST, PRIORITY_LOW_FIRST, COMPLETION_STATUS
@@ -83,8 +84,8 @@ class TaskViewModel : ViewModel() {
 
         // Paso 3: Aplicar ordenación
         result = when (order) {
-            TaskSortOrder.DATE_ASC -> result.sortedBy { it.dueDate }
-            TaskSortOrder.DATE_DESC -> result.sortedByDescending { it.dueDate }
+            TaskSortOrder.DATE_ASC -> result.sortedWith(compareBy(nullsLast()) { it.dueDate })
+            TaskSortOrder.DATE_DESC -> result.sortedWith(compareByDescending(nullsLast()) { it.dueDate })
             TaskSortOrder.PRIORITY_HIGH_FIRST -> result.sortedBy { it.priority.ordinal }
             TaskSortOrder.PRIORITY_LOW_FIRST -> result.sortedByDescending { it.priority.ordinal }
             TaskSortOrder.COMPLETION_STATUS -> result.sortedBy { it.isDone }
