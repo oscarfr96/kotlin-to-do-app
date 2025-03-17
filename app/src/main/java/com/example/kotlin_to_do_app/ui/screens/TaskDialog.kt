@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -68,7 +67,7 @@ fun TaskDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Fecha de vencimiento - Versión mejorada
+                // Fecha de vencimiento
                 Text(
                     text = "Fecha de vencimiento:",
                     style = MaterialTheme.typography.bodyLarge,

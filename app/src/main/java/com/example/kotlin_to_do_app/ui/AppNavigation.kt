@@ -1,6 +1,8 @@
 package com.example.kotlin_to_do_app.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -10,13 +12,16 @@ import com.example.kotlin_to_do_app.auth.AuthViewModel
 import com.example.kotlin_to_do_app.ui.screens.LoginScreen
 import com.example.kotlin_to_do_app.ui.screens.TaskListScreen
 import com.example.kotlin_to_do_app.viewmodel.TaskViewModel
+import com.example.kotlin_to_do_app.viewmodel.ThemeViewModel
 
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    themeViewModel: ThemeViewModel
 ) {
     val taskViewModel: TaskViewModel = viewModel()
+    val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
 
     NavHost(
         navController = navController,
@@ -38,7 +43,9 @@ fun AppNavigation(
                         popUpTo("tasks") { inclusive = true }
                     }
                 },
-                taskViewModel = taskViewModel
+                taskViewModel = taskViewModel,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = { themeViewModel.toggleTheme() }
             )
         }
     }

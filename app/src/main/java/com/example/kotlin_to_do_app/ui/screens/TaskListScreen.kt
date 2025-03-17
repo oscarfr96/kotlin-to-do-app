@@ -1,6 +1,7 @@
 package com.example.kotlin_to_do_app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,12 +28,17 @@ import com.example.kotlin_to_do_app.ui.components.TaskSearchBar
 import com.example.kotlin_to_do_app.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import com.example.kotlin_to_do_app.ui.components.ThemeSwitch
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(
     onLogout: () -> Unit,
-    taskViewModel: TaskViewModel = viewModel()
+    taskViewModel: TaskViewModel = viewModel(),
+    isDarkTheme: Boolean = false,
+    onToggleTheme: () -> Unit = {}
 ) {
     val tasks by taskViewModel.filteredTasks.collectAsState()
     val isLoading by taskViewModel.isLoading.collectAsState()
@@ -51,6 +57,12 @@ fun TaskListScreen(
                 TopAppBar(
                     title = { Text("Mis Tareas") },
                     actions = {
+                        // Selector de tema
+                        ThemeSwitch(
+                            isDarkTheme = isDarkTheme,
+                            onToggleTheme = onToggleTheme
+                        )
+
                         SortOrderDropdown(
                             currentSortOrder = sortOrder,
                             onSortOrderSelected = { taskViewModel.setSortOrder(it) }
@@ -58,7 +70,7 @@ fun TaskListScreen(
 
                         IconButton(onClick = { showFilters = !showFilters }) {
                             Icon(
-                                imageVector = Icons.Default.MoreVert,
+                                imageVector = Icons.Default.Menu,
                                 contentDescription = "Filtros"
                             )
                         }
@@ -163,13 +175,16 @@ fun TaskListScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(tasks) { task ->
                         TaskItem(
                             task = task,
                             onTaskClick = { selectedTask = task },
-                            onToggleStatus = { taskViewModel.toggleTaskStatus(task) }
+                            onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                            isDarkTheme = isDarkTheme
                         )
                     }
                 }
@@ -216,17 +231,29 @@ fun TaskListScreen(
 fun TaskItem(
     task: Task,
     onTaskClick: () -> Unit,
-    onToggleStatus: () -> Unit
+    onToggleStatus: () -> Unit,
+    isDarkTheme: Boolean = false
 ) {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp)
+            .border(
+                width = 1.5.dp,
+                color = Color.Black.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(12.dp)
+            )
             .clickable(onClick = onTaskClick),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDarkTheme)
+                Color(0xFF1B1B1B)  // Gris oscuro para tema oscuro
+            else
+                Color(0xFFF5F5F5)  // Gris claro para tema claro
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -242,7 +269,7 @@ fun TaskItem(
                     .background(
                         when (task.priority) {
                             TaskPriority.HIGH -> Color.Red
-                            TaskPriority.MEDIUM -> Color(0xFFFFA500) // Orange
+                            TaskPriority.MEDIUM -> Color(0xFFFFA500)
                             TaskPriority.LOW -> Color.Green
                         }
                     )
@@ -270,31 +297,24 @@ fun TaskItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Fecha de vencimiento - Más prominente
+                // Fecha de vencimiento
                 if (task.dueDate != null) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(end = 8.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = dateFormat.format(task.dueDate),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = dateFormat.format(task.dueDate),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
@@ -304,7 +324,7 @@ fun TaskItem(
                         text = task.description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         textDecoration = if (task.isDone) TextDecoration.LineThrough else TextDecoration.None
                     )
