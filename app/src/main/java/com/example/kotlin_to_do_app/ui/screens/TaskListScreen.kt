@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kotlin_to_do_app.model.Task
 import com.example.kotlin_to_do_app.model.TaskPriority
+import com.example.kotlin_to_do_app.ui.components.PriorityFilterChips
+import com.example.kotlin_to_do_app.ui.components.SortOrderDropdown
+import com.example.kotlin_to_do_app.ui.components.TaskSearchBar
 import com.example.kotlin_to_do_app.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,26 +34,64 @@ fun TaskListScreen(
     onLogout: () -> Unit,
     taskViewModel: TaskViewModel = viewModel()
 ) {
-    val tasks by taskViewModel.tasks.collectAsState()
+    val tasks by taskViewModel.filteredTasks.collectAsState()
     val isLoading by taskViewModel.isLoading.collectAsState()
     val error by taskViewModel.error.collectAsState()
+    val searchQuery by taskViewModel.searchQuery.collectAsState()
+    val selectedPriority by taskViewModel.selectedPriority.collectAsState()
+    val sortOrder by taskViewModel.sortOrder.collectAsState()
 
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var selectedTask by remember { mutableStateOf<Task?>(null) }
+    var showFilters by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Mis Tareas") },
-                actions = {
-                    IconButton(onClick = onLogout) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Cerrar sesión"
+            Column {
+                TopAppBar(
+                    title = { Text("Mis Tareas") },
+                    actions = {
+                        SortOrderDropdown(
+                            currentSortOrder = sortOrder,
+                            onSortOrderSelected = { taskViewModel.setSortOrder(it) }
+                        )
+
+                        IconButton(onClick = { showFilters = !showFilters }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Filtros"
+                            )
+                        }
+
+                        IconButton(onClick = onLogout) {
+                            Icon(
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = "Cerrar sesión"
+                            )
+                        }
+                    }
+                )
+
+                if (showFilters) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        TaskSearchBar(
+                            searchQuery = searchQuery,
+                            onSearchQueryChange = { taskViewModel.setSearchQuery(it) }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        PriorityFilterChips(
+                            selectedPriority = selectedPriority,
+                            onPrioritySelected = { taskViewModel.setPriorityFilter(it) }
                         )
                     }
                 }
-            )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -88,17 +129,35 @@ fun TaskListScreen(
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    val messageText = if (searchQuery.isNotBlank() || selectedPriority != null) {
+                        "No se encontraron tareas con los filtros aplicados"
+                    } else {
+                        "No hay tareas pendientes"
+                    }
+
                     Text(
-                        "No hay tareas pendientes",
+                        messageText,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Pulsa el botón + para añadir una nueva tarea",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+
+                    if (searchQuery.isNotBlank() || selectedPriority != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = {
+                            taskViewModel.setSearchQuery("")
+                            taskViewModel.setPriorityFilter(null)
+                        }) {
+                            Text("Limpiar filtros")
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Pulsa el botón + para añadir una nueva tarea",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -152,6 +211,8 @@ fun TaskListScreen(
         )
     }
 }
+
+// Mantén el resto del código (TaskItem, etc.) igual
 
 @Composable
 fun TaskItem(
