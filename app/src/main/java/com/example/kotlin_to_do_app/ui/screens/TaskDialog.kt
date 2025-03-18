@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -79,7 +80,7 @@ fun TaskDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
-                        imageVector = Icons.Default.DateRange,
+                        imageVector = Icons.Filled.CalendarMonth,
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -192,7 +193,7 @@ fun TaskDialog(
                     onClick = { task?.id?.let { onTaskDeleted(it) } }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
+                        imageVector = Icons.Filled.Delete,
                         contentDescription = "Eliminar tarea",
                         tint = MaterialTheme.colorScheme.error
                     )

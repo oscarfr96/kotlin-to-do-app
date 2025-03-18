@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import com.example.kotlin_to_do_app.model.TaskPriority
 import com.example.kotlin_to_do_app.ui.components.PriorityFilterChips
 import com.example.kotlin_to_do_app.ui.components.SortOrderDropdown
 import com.example.kotlin_to_do_app.ui.components.TaskSearchBar
+import com.example.kotlin_to_do_app.ui.components.SwipeableTaskItem
 import com.example.kotlin_to_do_app.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -68,17 +71,21 @@ fun TaskListScreen(
                             onSortOrderSelected = { taskViewModel.setSortOrder(it) }
                         )
 
+                        // Botón de filtros - Ícono mejorado
                         IconButton(onClick = { showFilters = !showFilters }) {
                             Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Filtros"
+                                imageVector = Icons.Outlined.FilterAlt,
+                                contentDescription = "Filtros",
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
+                        // Botón de cerrar sesión - Ícono mejorado
                         IconButton(onClick = onLogout) {
                             Icon(
-                                imageVector = Icons.Default.ExitToApp,
-                                contentDescription = "Cerrar sesión"
+                                imageVector = Icons.Outlined.Logout,
+                                contentDescription = "Cerrar sesión",
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -110,9 +117,12 @@ fun TaskListScreen(
                 onClick = { showAddTaskDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
+                // Ícono mejorado para el FAB
                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Añadir tarea"
+                    imageVector = Icons.Rounded.AddCircle,
+                    contentDescription = "Añadir tarea",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(26.dp)
                 )
             }
         }
@@ -134,8 +144,9 @@ fun TaskListScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // Ícono mejorado para lista vacía
                     Icon(
-                        imageVector = Icons.Default.List,
+                        imageVector = Icons.Outlined.Assignment,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
@@ -160,6 +171,11 @@ fun TaskListScreen(
                             taskViewModel.setSearchQuery("")
                             taskViewModel.setPriorityFilter(null)
                         }) {
+                            Icon(
+                                imageVector = Icons.Outlined.FilterListOff,
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("Limpiar filtros")
                         }
                     } else {
@@ -180,10 +196,12 @@ fun TaskListScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(tasks) { task ->
-                        TaskItem(
+                        // Usar el componente SwipeableTaskItem en lugar de TaskItem directamente
+                        SwipeableTaskItem(
                             task = task,
                             onTaskClick = { selectedTask = task },
                             onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                            onDeleteTask = { taskViewModel.deleteTask(task.id) },
                             isDarkTheme = isDarkTheme
                         )
                     }
@@ -261,18 +279,16 @@ fun TaskItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Priority indicator
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when (task.priority) {
-                            TaskPriority.HIGH -> Color.Red
-                            TaskPriority.MEDIUM -> Color(0xFFFFA500)
-                            TaskPriority.LOW -> Color.Green
-                        }
-                    )
+            // Priority indicator actualizado a un ícono de círculo
+            Icon(
+                imageVector = Icons.Filled.Circle,
+                contentDescription = "Prioridad ${task.priority.name}",
+                tint = when (task.priority) {
+                    TaskPriority.HIGH -> Color.Red
+                    TaskPriority.MEDIUM -> Color(0xFFFFA500)
+                    TaskPriority.LOW -> Color.Green
+                },
+                modifier = Modifier.size(16.dp)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -297,14 +313,14 @@ fun TaskItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Fecha de vencimiento
+                // Fecha de vencimiento con icono moderno
                 if (task.dueDate != null) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.DateRange,
+                            imageVector = Icons.Outlined.Event,
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.primary

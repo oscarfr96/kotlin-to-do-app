@@ -40,7 +40,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"  // Ajusta esta versión según tu setup
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
 }
 
@@ -55,16 +55,20 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui)
 
-
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
 
+    // Navegación y Material
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.compose.material:material:1.5.4")
     implementation("androidx.compose.material3:material3:1.1.2")
 
+    // Material Icons Extended - AÑADIDO
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+
+    // Carga de imágenes
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Testing
@@ -75,5 +79,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
 }

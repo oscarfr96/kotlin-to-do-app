@@ -14,6 +14,11 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.Sort
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +34,7 @@ fun TaskSearchBar(
         placeholder = { Text("Buscar tareas...") },
         leadingIcon = {
             Icon(
-                imageVector = Icons.Default.Search,
+                imageVector = Icons.Filled.Search,
                 contentDescription = "Buscar"
             )
         },
@@ -37,7 +42,7 @@ fun TaskSearchBar(
             if (searchQuery.isNotEmpty()) {
                 IconButton(onClick = { onSearchQueryChange("") }) {
                     Icon(
-                        imageVector = Icons.Default.Clear,
+                        imageVector = Icons.Filled.Clear,
                         contentDescription = "Limpiar búsqueda"
                     )
                 }
@@ -91,7 +96,7 @@ fun SortOrderDropdown(
     Box {
         IconButton(onClick = { expanded = true }) {
             Icon(
-                imageVector = Icons.Filled.ArrowDropDown,
+                imageVector = Icons.Outlined.Sort,
                 contentDescription = "Ordenar"
             )
         }
