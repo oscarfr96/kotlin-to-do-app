@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -169,8 +170,6 @@ fun TaskListScreen(
             }
         }
     ) { paddingValues ->
-// En TaskListScreen.kt
-// Reemplaza la estructura condicional existente
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -233,7 +232,6 @@ fun TaskListScreen(
                     }
                 }
             } else {
-                // En el return de TaskListScreen
                 if (isCalendarView) {
                     // Vista de calendario
                     val allTasksList by taskViewModel.allTasks.collectAsState()
@@ -250,7 +248,33 @@ fun TaskListScreen(
                         isDarkTheme = isDarkTheme
                     )
                 } else {
-                    // Vista de lista tradicional
+                    // Vista de lista con secciones temporales
+                    val today = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.time
+
+                    // Agrupar tareas por tiempo
+                    val todayTasks = tasks.filter { task ->
+                        task.dueDate != null &&
+                                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(task.dueDate) ==
+                                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+                    }
+
+                    val futureTasks = tasks.filter { task ->
+                        task.dueDate != null && task.dueDate.after(today) &&
+                                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(task.dueDate) !=
+                                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+                    }
+
+                    val pastTasks = tasks.filter { task ->
+                        task.dueDate != null && task.dueDate.before(today)
+                    }
+
+                    val noDateTasks = tasks.filter { task -> task.dueDate == null }
+
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -258,14 +282,78 @@ fun TaskListScreen(
                         contentPadding = PaddingValues(vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        items(tasks) { task ->
-                            SwipeableTaskItem(
-                                task = task,
-                                onTaskClick = { selectedTask = task },
-                                onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
-                                onDeleteTask = { taskViewModel.deleteTask(task.id) },
-                                isDarkTheme = isDarkTheme
-                            )
+                        // Tareas para hoy
+                        if (todayTasks.isNotEmpty()) {
+                            item {
+                                SectionHeader(title = "PARA HOY", color = MaterialTheme.colorScheme.primary)
+                            }
+
+                            items(todayTasks) { task ->
+                                SwipeableTaskItem(
+                                    task = task,
+                                    onTaskClick = { selectedTask = task },
+                                    onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                                    onDeleteTask = { taskViewModel.deleteTask(task.id) },
+                                    isDarkTheme = isDarkTheme
+                                )
+                            }
+                        }
+
+                        // Tareas futuras
+                        if (futureTasks.isNotEmpty()) {
+                            item {
+                                SectionHeader(title = "TAREAS FUTURAS", color = MaterialTheme.colorScheme.secondary)
+                            }
+
+                            items(futureTasks) { task ->
+                                SwipeableTaskItem(
+                                    task = task,
+                                    onTaskClick = { selectedTask = task },
+                                    onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                                    onDeleteTask = { taskViewModel.deleteTask(task.id) },
+                                    isDarkTheme = isDarkTheme
+                                )
+                            }
+                        }
+
+                        // Tareas pasadas
+                        if (pastTasks.isNotEmpty()) {
+                            item {
+                                SectionHeader(
+                                    title = "TAREAS PASADAS",
+                                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                )
+                            }
+
+                            items(pastTasks) { task ->
+                                SwipeableTaskItem(
+                                    task = task,
+                                    onTaskClick = { selectedTask = task },
+                                    onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                                    onDeleteTask = { taskViewModel.deleteTask(task.id) },
+                                    isDarkTheme = isDarkTheme
+                                )
+                            }
+                        }
+
+                        // Tareas sin fecha
+                        if (noDateTasks.isNotEmpty()) {
+                            item {
+                                SectionHeader(
+                                    title = "SIN FECHA ASIGNADA",
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+
+                            items(noDateTasks) { task ->
+                                SwipeableTaskItem(
+                                    task = task,
+                                    onTaskClick = { selectedTask = task },
+                                    onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                                    onDeleteTask = { taskViewModel.deleteTask(task.id) },
+                                    isDarkTheme = isDarkTheme
+                                )
+                            }
                         }
                     }
                 }
@@ -304,6 +392,39 @@ fun TaskListScreen(
                 taskViewModel.deleteTask(taskId)
                 selectedTask = null
             }
+        )
+    }
+}
+
+@Composable
+fun SectionHeader(title: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .height(24.dp)
+                .width(4.dp)
+                .background(color, shape = RoundedCornerShape(2.dp))
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+
+        Divider(
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .weight(1f),
+            color = color.copy(alpha = 0.3f)
         )
     }
 }
