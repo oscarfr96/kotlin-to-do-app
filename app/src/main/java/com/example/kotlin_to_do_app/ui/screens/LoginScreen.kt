@@ -105,10 +105,10 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { isLoginMode = !isLoginMode }) {
+        /*TextButton(onClick = { isLoginMode = !isLoginMode }) {
             Text(
                 text = if (isLoginMode) "¿No tienes cuenta? Regístrate" else "¿Ya tienes cuenta? Inicia sesión"
             )
-        }
+        }*/
     }
 }
