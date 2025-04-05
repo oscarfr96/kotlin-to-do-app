@@ -34,6 +34,9 @@ import java.util.*
 import com.example.kotlin_to_do_app.ui.components.ThemeSwitch
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ViewList
+import com.example.kotlin_to_do_app.ui.components.CalendarView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +52,8 @@ fun TaskListScreen(
     val searchQuery by taskViewModel.searchQuery.collectAsState()
     val selectedPriority by taskViewModel.selectedPriority.collectAsState()
     val sortOrder by taskViewModel.sortOrder.collectAsState()
+    val selectedDate by taskViewModel.selectedDate.collectAsState()
+    val isCalendarView by taskViewModel.isCalendarView.collectAsState()
 
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var selectedTask by remember { mutableStateOf<Task?>(null) }
@@ -60,6 +65,27 @@ fun TaskListScreen(
                 TopAppBar(
                     title = { Text("Mis Tareas") },
                     actions = {
+                        // Botón para alternar entre vista de lista y calendario
+                        IconButton(onClick = {
+                            // Si estamos pasando de calendario a lista, limpiar el filtro de fecha
+                            if (isCalendarView) {
+                                taskViewModel.setSelectedDate(null)
+                            }
+                            taskViewModel.toggleCalendarView()
+                        }) {
+                            Icon(
+                                imageVector = if (isCalendarView)
+                                    Icons.Default.ViewList
+                                else
+                                    Icons.Default.CalendarMonth,
+                                contentDescription = if (isCalendarView)
+                                    "Ver como lista"
+                                else
+                                    "Ver como calendario",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
                         // Selector de tema
                         ThemeSwitch(
                             isDarkTheme = isDarkTheme,
@@ -71,7 +97,7 @@ fun TaskListScreen(
                             onSortOrderSelected = { taskViewModel.setSortOrder(it) }
                         )
 
-                        // Botón de filtros - Ícono mejorado
+                        // Botón de filtros
                         IconButton(onClick = { showFilters = !showFilters }) {
                             Icon(
                                 imageVector = Icons.Outlined.FilterAlt,
@@ -80,7 +106,7 @@ fun TaskListScreen(
                             )
                         }
 
-                        // Botón de cerrar sesión - Ícono mejorado
+                        // Botón de cerrar sesión
                         IconButton(onClick = onLogout) {
                             Icon(
                                 imageVector = Icons.Outlined.Logout,
@@ -108,6 +134,23 @@ fun TaskListScreen(
                             selectedPriority = selectedPriority,
                             onPrioritySelected = { taskViewModel.setPriorityFilter(it) }
                         )
+
+                        // Si hay una fecha seleccionada, mostrar un chip para limpiarla
+                        if (selectedDate != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Fecha: ${SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(selectedDate!!)}")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                IconButton(onClick = { taskViewModel.setSelectedDate(null) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "Limpiar filtro de fecha"
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -117,7 +160,6 @@ fun TaskListScreen(
                 onClick = { showAddTaskDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                // Ícono mejorado para el FAB
                 Icon(
                     imageVector = Icons.Rounded.AddCircle,
                     contentDescription = "Añadir tarea",
@@ -127,6 +169,8 @@ fun TaskListScreen(
             }
         }
     ) { paddingValues ->
+// En TaskListScreen.kt
+// Reemplaza la estructura condicional existente
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -136,7 +180,8 @@ fun TaskListScreen(
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
-            } else if (tasks.isEmpty()) {
+            } else if (tasks.isEmpty() && !isCalendarView) {
+                // Solo mostrar la vista de "no hay tareas" en modo lista
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -144,7 +189,6 @@ fun TaskListScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Ícono mejorado para lista vacía
                     Icon(
                         imageVector = Icons.Outlined.Assignment,
                         contentDescription = null,
@@ -154,6 +198,7 @@ fun TaskListScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     val messageText = if (searchQuery.isNotBlank() || selectedPriority != null) {
+                        // Solo considerar búsqueda y prioridad para el mensaje de filtros
                         "No se encontraron tareas con los filtros aplicados"
                     } else {
                         "No hay tareas pendientes"
@@ -188,22 +233,40 @@ fun TaskListScreen(
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    items(tasks) { task ->
-                        // Usar el componente SwipeableTaskItem en lugar de TaskItem directamente
-                        SwipeableTaskItem(
-                            task = task,
-                            onTaskClick = { selectedTask = task },
-                            onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
-                            onDeleteTask = { taskViewModel.deleteTask(task.id) },
-                            isDarkTheme = isDarkTheme
-                        )
+                // En el return de TaskListScreen
+                if (isCalendarView) {
+                    // Vista de calendario
+                    val allTasksList by taskViewModel.allTasks.collectAsState()
+
+                    CalendarView(
+                        allTasks = allTasksList,  // Lista completa sin filtrar
+                        filteredTasks = tasks,    // Lista filtrada solo con tareas del día seleccionado
+                        onDateSelected = { date ->
+                            taskViewModel.setSelectedDate(date)
+                        },
+                        onTaskClick = { task ->
+                            selectedTask = task
+                        },
+                        isDarkTheme = isDarkTheme
+                    )
+                } else {
+                    // Vista de lista tradicional
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(tasks) { task ->
+                            SwipeableTaskItem(
+                                task = task,
+                                onTaskClick = { selectedTask = task },
+                                onToggleStatus = { taskViewModel.toggleTaskStatus(task) },
+                                onDeleteTask = { taskViewModel.deleteTask(task.id) },
+                                isDarkTheme = isDarkTheme
+                            )
+                        }
                     }
                 }
             }
@@ -242,110 +305,5 @@ fun TaskListScreen(
                 selectedTask = null
             }
         )
-    }
-}
-
-@Composable
-fun TaskItem(
-    task: Task,
-    onTaskClick: () -> Unit,
-    onToggleStatus: () -> Unit,
-    isDarkTheme: Boolean = false
-) {
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .border(
-                width = 1.5.dp,
-                color = Color.Black.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(onClick = onTaskClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDarkTheme)
-                Color(0xFF1B1B1B)  // Gris oscuro para tema oscuro
-            else
-                Color(0xFFF5F5F5)  // Gris claro para tema claro
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Priority indicator actualizado a un ícono de círculo
-            Icon(
-                imageVector = Icons.Filled.Circle,
-                contentDescription = "Prioridad ${task.priority.name}",
-                tint = when (task.priority) {
-                    TaskPriority.HIGH -> Color.Red
-                    TaskPriority.MEDIUM -> Color(0xFFFFA500)
-                    TaskPriority.LOW -> Color.Green
-                },
-                modifier = Modifier.size(16.dp)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Checkbox
-            Checkbox(
-                checked = task.isDone,
-                onCheckedChange = { onToggleStatus() }
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Task info
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    textDecoration = if (task.isDone) TextDecoration.LineThrough else TextDecoration.None,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                // Fecha de vencimiento con icono moderno
-                if (task.dueDate != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Event,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = dateFormat.format(task.dueDate),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                if (task.description.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = task.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        textDecoration = if (task.isDone) TextDecoration.LineThrough else TextDecoration.None
-                    )
-                }
-            }
-        }
     }
 }

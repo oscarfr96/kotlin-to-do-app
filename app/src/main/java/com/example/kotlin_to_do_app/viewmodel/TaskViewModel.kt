@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlin.comparisons.nullsLast
+import java.text.SimpleDateFormat
+import java.util.*
 
 enum class TaskSortOrder {
     DATE_ASC, DATE_DESC, PRIORITY_HIGH_FIRST, PRIORITY_LOW_FIRST, COMPLETION_STATUS
@@ -21,6 +23,7 @@ class TaskViewModel : ViewModel() {
 
     // Fuente de datos original
     private val _allTasks = MutableStateFlow<List<Task>>(emptyList())
+    val allTasks: StateFlow<List<Task>> = _allTasks
 
     // Estados para filtros y ordenación
     private val _selectedPriority = MutableStateFlow<TaskPriority?>(null)
@@ -32,6 +35,10 @@ class TaskViewModel : ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    // Nuevo estado para fecha seleccionada
+    private val _selectedDate = MutableStateFlow<Date?>(null)
+    val selectedDate: StateFlow<Date?> = _selectedDate
+
     // Lista filtrada y ordenada que se muestra al usuario
     private val _filteredTasks = MutableStateFlow<List<Task>>(emptyList())
     val filteredTasks: StateFlow<List<Task>> = _filteredTasks
@@ -42,18 +49,23 @@ class TaskViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    // Estado para la vista actual (lista o calendario)
+    private val _isCalendarView = MutableStateFlow(false)
+    val isCalendarView: StateFlow<Boolean> = _isCalendarView
+
     init {
         loadTasks()
 
-        // Combinar estados para aplicar filtros y ordenación cuando cambie cualquiera de ellos
+        // Combinar estados para aplicar filtros y ordenación
         viewModelScope.launch {
             combine(
                 _allTasks,
                 _selectedPriority,
                 _sortOrder,
-                _searchQuery
-            ) { tasks, priority, order, query ->
-                applyFiltersAndSort(tasks, priority, order, query)
+                _searchQuery,
+                _selectedDate
+            ) { tasks, priority, order, query, date ->
+                applyFiltersAndSort(tasks, priority, order, query, date)
             }.collect { filtered ->
                 _filteredTasks.value = filtered
             }
@@ -64,7 +76,8 @@ class TaskViewModel : ViewModel() {
         tasks: List<Task>,
         priority: TaskPriority?,
         order: TaskSortOrder,
-        query: String
+        query: String,
+        date: Date?
     ): List<Task> {
         // Paso 1: Aplicar filtro de prioridad
         var result = if (priority != null) {
@@ -73,7 +86,15 @@ class TaskViewModel : ViewModel() {
             tasks
         }
 
-        // Paso 2: Aplicar búsqueda de texto
+        // Paso 2: Aplicar filtro de fecha
+        if (date != null) {
+            val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+            result = result.filter { task ->
+                task.dueDate?.let { dateFormat.format(it) == dateFormat.format(date) } ?: false
+            }
+        }
+
+        // Paso 3: Aplicar búsqueda de texto
         if (query.isNotBlank()) {
             val lowercaseQuery = query.lowercase()
             result = result.filter {
@@ -82,7 +103,7 @@ class TaskViewModel : ViewModel() {
             }
         }
 
-        // Paso 3: Aplicar ordenación
+        // Paso 4: Aplicar ordenación
         result = when (order) {
             TaskSortOrder.DATE_ASC -> result.sortedWith(compareBy(nullsLast()) { it.dueDate })
             TaskSortOrder.DATE_DESC -> result.sortedWith(compareByDescending(nullsLast()) { it.dueDate })
@@ -127,7 +148,23 @@ class TaskViewModel : ViewModel() {
         _searchQuery.value = query
     }
 
-    // Métodos para operaciones CRUD (mantener los que ya tenías)
+    // Nuevo método para establecer la fecha seleccionada
+    fun setSelectedDate(date: Date?) {
+        _selectedDate.value = date
+    }
+
+    // Método para alternar la vista
+    fun toggleCalendarView() {
+        val newValue = !_isCalendarView.value
+        _isCalendarView.value = newValue
+
+        // Si estamos cambiando a vista de lista, limpiar el filtro de fecha
+        if (!newValue) {
+            setSelectedDate(null)
+        }
+    }
+
+    // Métodos para operaciones CRUD existentes...
     fun addTask(task: Task) {
         viewModelScope.launch {
             try {
