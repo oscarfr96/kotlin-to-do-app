@@ -2,6 +2,8 @@
 
 Aplicación de gestión de tareas desarrollada con **Kotlin**, **Jetpack Compose** y **Firebase**, que permite crear, organizar y dar seguimiento a tareas diarias con características avanzadas como priorización, vistas organizadas temporalmente, calendario interactivo y temas personalizables.
 
+Demo prototipo en Figma: https://www.figma.com/proto/bQE5XgmDtznhc4BPNYZwle/TaskManager-App?node-id=0-1&t=EOuRub4dCntK06FZ-1
+
 ## Características Principales
 
 - ✅ **Autenticación de usuarios** con Firebase Authentication.
